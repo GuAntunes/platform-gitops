@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backend-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: bridal-cover
+    environment: dev
+spec:
+  project: bridal-cover
+  source:
+    repoURL: git@github.com:GuAntunes/bridal-cover-crm.git
+    targetRevision: main
+    path: helm-chart/bridal-cover-crm
+    helm:
+      releaseName: backend
+      valueFiles:
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

@@ -59,14 +59,8 @@ bootstrap-root: ## Aplicar root-app (App of Apps) - executar uma vez
 	@echo "$(YELLOW)Sync manual: use a UI ou 'argocd app sync root-app'$(NC)"
 
 .PHONY: validate
-validate: ## Validar YAMLs sem aplicar no cluster
-	kubectl apply --dry-run=client --validate=false -f $(ARGOCD_DIR)/bootstrap/
-	@find $(ARGOCD_DIR)/projects -name '*.yaml' | grep -q . && \
-		kubectl apply --dry-run=client --validate=false -f $(ARGOCD_DIR)/projects/ || \
-		echo "$(YELLOW)Skip: nenhum AppProject$(NC)"
-	@find $(ARGOCD_DIR)/applications -name '*.yaml' | grep -q . && \
-		kubectl apply --dry-run=client --validate=false -R -f $(ARGOCD_DIR)/applications/ || \
-		echo "$(YELLOW)Skip: nenhuma Application$(NC)"
+validate: ## Validar sintaxe YAML localmente (sem cluster)
+	@ruby -ryaml -e "Dir['$(ARGOCD_DIR)/**/*.yaml'].each { |f| YAML.load_file(f) }"
 	@echo "$(GREEN)Validacao concluida$(NC)"
 
 .PHONY: generate-deploy-key

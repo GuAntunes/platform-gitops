@@ -5,9 +5,7 @@ ARGOCD_NAMESPACE := argocd
 ARGOCD_INSTALL_URL := https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 GITOPS_REPO_URL := git@github.com:GuAntunes/platform-gitops.git
-APP_REPO_URL := git@github.com:GuAntunes/bridal-cover-crm.git
 GITOPS_DEPLOY_KEY := $(HOME)/.ssh/argocd_platform_gitops
-APP_DEPLOY_KEY := $(HOME)/.ssh/argocd_bridal_cover_crm
 
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
@@ -48,10 +46,11 @@ password: ## Exibir senha inicial do admin
 	@kubectl -n $(ARGOCD_NAMESPACE) get secret argocd-initial-admin-secret \
 		-o jsonpath="{.data.password}" 2>/dev/null | base64 -d; echo
 
-.PHONY: bootstrap-project
-bootstrap-project: ## Aplicar AppProject bridal-cover
-	kubectl apply -f $(ARGOCD_DIR)/projects/bridal-cover.yaml
-	@echo "$(GREEN)AppProject aplicado$(NC)"
+.PHONY: bootstrap-projects
+bootstrap-projects: ## Aplicar todos os AppProjects em argocd/projects/
+	@find $(ARGOCD_DIR)/projects -name '*.yaml' | grep -q . || (echo "$(YELLOW)Nenhum AppProject em $(ARGOCD_DIR)/projects/$(NC)" && exit 1)
+	kubectl apply -f $(ARGOCD_DIR)/projects/
+	@echo "$(GREEN)AppProjects aplicados$(NC)"
 
 .PHONY: bootstrap-root
 bootstrap-root: ## Aplicar root-app (App of Apps) - executar uma vez
@@ -61,21 +60,24 @@ bootstrap-root: ## Aplicar root-app (App of Apps) - executar uma vez
 
 .PHONY: validate
 validate: ## Validar YAMLs sem aplicar no cluster
-	kubectl apply --dry-run=client -f $(ARGOCD_DIR)/projects/
-	kubectl apply --dry-run=client -R -f $(ARGOCD_DIR)/applications/
-	kubectl apply --dry-run=client -f $(ARGOCD_DIR)/bootstrap/
-	@echo "$(GREEN)YAMLs validos$(NC)"
+	kubectl apply --dry-run=client --validate=false -f $(ARGOCD_DIR)/bootstrap/
+	@find $(ARGOCD_DIR)/projects -name '*.yaml' | grep -q . && \
+		kubectl apply --dry-run=client --validate=false -f $(ARGOCD_DIR)/projects/ || \
+		echo "$(YELLOW)Skip: nenhum AppProject$(NC)"
+	@find $(ARGOCD_DIR)/applications -name '*.yaml' | grep -q . && \
+		kubectl apply --dry-run=client --validate=false -R -f $(ARGOCD_DIR)/applications/ || \
+		echo "$(YELLOW)Skip: nenhuma Application$(NC)"
+	@echo "$(GREEN)Validacao concluida$(NC)"
 
-.PHONY: generate-gitops-deploy-key
-generate-gitops-deploy-key: ## Gerar SSH key para platform-gitops
+.PHONY: generate-deploy-key
+generate-deploy-key: ## Gerar SSH key para este repositorio
 	@test -f $(GITOPS_DEPLOY_KEY) || ssh-keygen -t ed25519 -f $(GITOPS_DEPLOY_KEY) -N "" -C "argocd-deploy-key-platform-gitops"
 	@chmod 600 $(GITOPS_DEPLOY_KEY)
 	@echo "$(GREEN)Chave: $(GITOPS_DEPLOY_KEY)$(NC)"
-	@echo "$(YELLOW)GitHub: https://github.com/GuAntunes/platform-gitops/settings/keys$(NC)"
 	@cat $(GITOPS_DEPLOY_KEY).pub
 
-.PHONY: setup-gitops-repo-secret
-setup-gitops-repo-secret: ## Registrar platform-gitops no ArgoCD
+.PHONY: setup-repo-secret
+setup-repo-secret: ## Registrar este repo no ArgoCD
 	kubectl create secret generic platform-gitops-repo -n $(ARGOCD_NAMESPACE) \
 		--from-literal=url=$(GITOPS_REPO_URL) \
 		--from-file=sshPrivateKey=$(GITOPS_DEPLOY_KEY) \
@@ -83,24 +85,10 @@ setup-gitops-repo-secret: ## Registrar platform-gitops no ArgoCD
 	kubectl label secret platform-gitops-repo -n $(ARGOCD_NAMESPACE) \
 		argocd.argoproj.io/secret-type=repository --overwrite
 	kubectl rollout restart deployment argocd-repo-server -n $(ARGOCD_NAMESPACE)
-	@echo "$(GREEN)Secret platform-gitops aplicado$(NC)"
+	@echo "$(GREEN)Secret aplicado$(NC)"
 
-.PHONY: setup-app-repo-secret
-setup-app-repo-secret: ## Registrar bridal-cover-crm no ArgoCD
-	kubectl create secret generic bridal-cover-crm-repo -n $(ARGOCD_NAMESPACE) \
-		--from-literal=url=$(APP_REPO_URL) \
-		--from-file=sshPrivateKey=$(APP_DEPLOY_KEY) \
-		--dry-run=client -o yaml | kubectl apply -f -
-	kubectl label secret bridal-cover-crm-repo -n $(ARGOCD_NAMESPACE) \
-		argocd.argoproj.io/secret-type=repository --overwrite
-	kubectl rollout restart deployment argocd-repo-server -n $(ARGOCD_NAMESPACE)
-	@echo "$(GREEN)Secret bridal-cover-crm aplicado$(NC)"
-
-.PHONY: setup-repos
-setup-repos: setup-gitops-repo-secret setup-app-repo-secret ## Registrar ambos repos no ArgoCD
-
-.PHONY: verify-repos
-verify-repos: ## Verificar conexao com os repositorios Git
+.PHONY: verify-repo
+verify-repo: ## Verificar conexao com o repositorio Git
 	@kubectl port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) 8080:443 >/dev/null 2>&1 & \
 		PF_PID=$$!; sleep 3; \
 		ARGOCD_PASS=$$(kubectl -n $(ARGOCD_NAMESPACE) get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d); \

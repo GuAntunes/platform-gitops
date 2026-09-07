@@ -2,6 +2,7 @@
 
 ARGOCD_DIR := argocd
 ARGOCD_NAMESPACE := argocd
+ARGOCD_UI_PORT := 8081
 ARGOCD_INSTALL_URL := https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 GITOPS_REPO_URL := git@github.com:GuAntunes/platform-gitops.git
@@ -36,10 +37,10 @@ status: ## Ver status dos pods do ArgoCD
 	@kubectl get pods -n $(ARGOCD_NAMESPACE)
 
 .PHONY: port-forward
-port-forward: ## Abrir UI em https://localhost:8080
-	@echo "$(GREEN)UI: https://localhost:8080$(NC)"
+port-forward: ## Abrir UI em https://localhost:$(ARGOCD_UI_PORT)
+	@echo "$(GREEN)UI: https://localhost:$(ARGOCD_UI_PORT)$(NC)"
 	@echo "$(YELLOW)Usuario: admin | Senha: make password$(NC)"
-	kubectl port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) 8080:443
+	kubectl port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) $(ARGOCD_UI_PORT):443
 
 .PHONY: password
 password: ## Exibir senha inicial do admin
@@ -83,9 +84,9 @@ setup-repo-secret: ## Registrar este repo no ArgoCD
 
 .PHONY: verify-repo
 verify-repo: ## Verificar conexao com o repositorio Git
-	@kubectl port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) 8080:443 >/dev/null 2>&1 & \
+	@kubectl port-forward svc/argocd-server -n $(ARGOCD_NAMESPACE) $(ARGOCD_UI_PORT):443 >/dev/null 2>&1 & \
 		PF_PID=$$!; sleep 3; \
 		ARGOCD_PASS=$$(kubectl -n $(ARGOCD_NAMESPACE) get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d); \
-		argocd login localhost:8080 --username admin --password "$$ARGOCD_PASS" --insecure >/dev/null 2>&1 && \
+		argocd login localhost:$(ARGOCD_UI_PORT) --username admin --password "$$ARGOCD_PASS" --insecure >/dev/null 2>&1 && \
 		argocd repo list || true; \
 		kill $$PF_PID 2>/dev/null || true

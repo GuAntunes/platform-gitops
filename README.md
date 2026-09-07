@@ -33,7 +33,7 @@ make generate-deploy-key
 make setup-repo-secret
 make bootstrap-projects    # apos adicionar AppProjects
 make bootstrap-root
-make port-forward
+make port-forward          # UI em https://localhost:8081
 ```
 
 ## Bootstrap inicial

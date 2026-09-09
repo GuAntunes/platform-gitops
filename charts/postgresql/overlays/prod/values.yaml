@@ -1,0 +1,20 @@
+# Overlay prod — apenas deltas sobre o base.
+# Em producao, prefira ExternalSecrets ou SealedSecrets para senhas.
+
+postgresql:
+  database: app_prod
+  password: CHANGE_ME
+
+service:
+  type: ClusterIP
+
+persistence:
+  size: 10Gi
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi

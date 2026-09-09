@@ -1,0 +1,24 @@
+# Defaults do chart (fallback local: helm template/install sem overlays)
+# Em GitOps, use base/ + overlays/ + argocd/applications/<projeto>/<ambiente>/postgres-values.yaml
+
+replicaCount: 1
+
+image:
+  repository: postgres
+  tag: "15-alpine"
+  pullPolicy: IfNotPresent
+
+postgresql:
+  database: app
+  username: postgres
+  password: postgres
+  initScript: false
+  initScriptSql: ""
+
+service:
+  type: ClusterIP
+  port: 5432
+
+persistence:
+  enabled: true
+  size: 2Gi

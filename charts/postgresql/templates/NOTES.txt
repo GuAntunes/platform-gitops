@@ -1,0 +1,42 @@
+1. Get the PostgreSQL connection details:
+
+   {{- if eq .Values.service.type "NodePort" }}
+   
+   External connection (NodePort):
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "postgresql.fullname" . }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "PostgreSQL available at: $NODE_IP:$NODE_PORT"
+   
+   {{- else if eq .Values.service.type "ClusterIP" }}
+   
+   Internal connection (ClusterIP):
+   PostgreSQL is available at: {{ include "postgresql.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+   
+   To connect from within the cluster:
+   psql -h {{ include "postgresql.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local -U {{ .Values.postgresql.username }} -d {{ .Values.postgresql.database }}
+   
+   {{- end }}
+
+2. Get the PostgreSQL password:
+
+   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "postgresql.fullname" . }} -o jsonpath="{.data.POSTGRES_PASSWORD}" | base64 --decode
+
+3. Database information:
+   - Database: {{ .Values.postgresql.database }}
+   - Username: {{ .Values.postgresql.username }}
+   
+4. To connect using port-forward:
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "postgresql.fullname" . }} 5432:5432
+   
+   Then connect using:
+   psql -h localhost -U {{ .Values.postgresql.username }} -d {{ .Values.postgresql.database }}
+
+5. Check pod status:
+
+   kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "postgresql.name" . }},app.kubernetes.io/instance={{ .Release.Name }}"
+
+6. View logs:
+
+   kubectl logs --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "postgresql.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -f
+

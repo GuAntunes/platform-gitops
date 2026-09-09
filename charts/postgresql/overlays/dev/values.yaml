@@ -1,0 +1,15 @@
+# Overlay dev — apenas deltas sobre o base.
+
+postgresql:
+  database: app_dev
+
+service:
+  nodePort: 30432
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

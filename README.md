@@ -7,20 +7,19 @@ Repositorio generico de GitOps com ArgoCD.
 ```
 platform-gitops/
 ├── Makefile
-├── README.md
+├── charts/
+│   └── postgresql/
+│       ├── values.yaml
+│       ├── base/
+│       ├── overlays/          # dev, staging, prod
+│       └── templates/
 └── argocd/
     ├── bootstrap/
-    │   └── root-app.yaml
-    ├── projects/              # AppProjects (1 YAML por projeto)
-    │   └── README.md
-    └── applications/            # Applications (por projeto/ambiente)
-        └── README.md
-```
-
-Convencao de pastas para applications:
-
-```
-argocd/applications/<projeto>/<ambiente>/<app>.yaml
+    ├── projects/
+    └── applications/
+        └── <projeto>/<ambiente>/
+            ├── postgres-dev.yaml
+            └── postgres-values.yaml   # deltas do projeto
 ```
 
 ## Comandos
@@ -31,21 +30,22 @@ make validate
 make install
 make generate-deploy-key
 make setup-repo-secret
-make bootstrap-projects    # apos adicionar AppProjects
+make bootstrap-projects
 make bootstrap-root
 make port-forward          # UI em https://localhost:8081
 ```
 
 ## Bootstrap inicial
 
-1. Adicionar AppProjects em `argocd/projects/`
-2. Adicionar Applications em `argocd/applications/<projeto>/<ambiente>/`
-3. Deploy key deste repo no GitHub + `make setup-repo-secret`
+1. AppProject em `argocd/projects/<projeto>.yaml`
+2. Application + values em `argocd/applications/<projeto>/<ambiente>/`
+3. Deploy key no GitHub + `make setup-repo-secret`
 4. `make bootstrap-projects && make bootstrap-root`
 5. Sync manual na UI do ArgoCD
 
 ## Convencoes
 
-- Sync manual por padrao (sem `automated` no syncPolicy)
-- Charts Helm ficam nos repos de cada aplicacao
-- Este repo contem apenas configuracao ArgoCD
+- Sync manual por padrao
+- Charts compartilhados em `charts/`
+- Charts de aplicacao nos repos de cada microservico
+- Overlays de ambiente no chart; deltas de projeto junto da Application

@@ -61,7 +61,7 @@ bootstrap-root: ## Aplicar root-app (App of Apps) - executar uma vez
 
 .PHONY: validate
 validate: ## Validar sintaxe YAML localmente (sem cluster)
-	@ruby -ryaml -e "Dir['$(ARGOCD_DIR)/**/*.yaml'].each { |f| YAML.load_file(f) }"
+	@ruby -ryaml -e "Dir['$(ARGOCD_DIR)/**/*.yaml', 'charts/**/Chart.yaml', 'charts/**/values.yaml', 'charts/**/base/**/*.yaml', 'charts/**/overlays/**/*.yaml'].each { |f| YAML.load_file(f) }"
 	@echo "$(GREEN)Validacao concluida$(NC)"
 
 .PHONY: generate-deploy-key

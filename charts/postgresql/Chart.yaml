@@ -1,0 +1,10 @@
+apiVersion: v2
+name: platform-postgresql
+description: PostgreSQL database chart for platform-gitops projects
+type: application
+version: 1.0.0
+appVersion: "15"
+keywords:
+  - postgresql
+  - database
+  - platform-gitops

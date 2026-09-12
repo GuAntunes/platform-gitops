@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-dev
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    app.kubernetes.io/part-of: example-project
+    environment: dev
+spec:
+  project: example-project
+  sources:
+    - repoURL: git@github.com:GuAntunes/platform-gitops.git
+      targetRevision: main
+      path: charts/postgresql
+      helm:
+        releaseName: postgres
+        valueFiles:
+          - $values/charts/postgresql/base/values.yaml
+          - $values/charts/postgresql/overlays/dev/values.yaml
+          - $values/argocd/applications/example-project/dev/postgres-values.yaml
+    - repoURL: git@github.com:GuAntunes/platform-gitops.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

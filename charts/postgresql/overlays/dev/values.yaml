@@ -1,10 +1,5 @@
 # Overlay dev — apenas deltas sobre o base.
-
-postgresql:
-  database: app_dev
-
-service:
-  nodePort: 30432
+# database e nodePort ficam no delta do projeto (argocd/applications/<projeto>/dev/postgres-values.yaml).
 
 resources:
   limits:

@@ -1,0 +1,9 @@
+# Deltas do projeto example-project (dev). Copie esta pasta e ajuste para seu produto.
+
+fullnameOverride: postgres
+
+postgresql:
+  database: example_app_dev
+
+service:
+  nodePort: 30432

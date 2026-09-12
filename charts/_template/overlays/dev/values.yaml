@@ -1,0 +1,3 @@
+# Overlay dev — apenas deltas sobre base/values.yaml
+
+replicaCount: 1

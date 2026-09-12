@@ -1,20 +1,13 @@
-# AppProjects
-
-Um arquivo YAML por produto em `argocd/projects/`.
-
-Modelo: [example-project.yaml](example-project.yaml) — copie, renomeie o arquivo e o campo `metadata.name`, e liste todos os repositorios Git que as Applications desse projeto usam em `spec.sourceRepos`.
-
-```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: my-project
+  name: example-project
   namespace: argocd
 spec:
-  description: Descricao do projeto
+  description: Projeto exemplo — copiar e renomear para um produto real
   sourceRepos:
     - git@github.com:GuAntunes/platform-gitops.git
-    - git@github.com:GuAntunes/my-app.git
+    # - git@github.com:GuAntunes/<app-repo>.git
   destinations:
     - namespace: dev
       server: https://kubernetes.default.svc
@@ -28,6 +21,3 @@ spec:
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
-```
-
-Aplicar: `make bootstrap-projects`

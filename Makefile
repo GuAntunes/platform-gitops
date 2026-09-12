@@ -61,8 +61,29 @@ bootstrap-root: ## Aplicar root-app (App of Apps) - executar uma vez
 
 .PHONY: validate
 validate: ## Validar sintaxe YAML localmente (sem cluster)
-	@ruby -ryaml -e "Dir['$(ARGOCD_DIR)/**/*.yaml', 'charts/**/Chart.yaml', 'charts/**/values.yaml', 'charts/**/base/**/*.yaml', 'charts/**/overlays/**/*.yaml'].each { |f| YAML.load_file(f) }"
+	@ruby -ryaml -e "Dir['$(ARGOCD_DIR)/**/*.yaml', 'charts/**/Chart.yaml', 'charts/**/values.yaml', 'charts/**/base/**/*.yaml', 'charts/**/overlays/**/*.yaml'].each { |f| next if f.include?('/_template/'); YAML.load_file(f) }"
 	@echo "$(GREEN)Validacao concluida$(NC)"
+
+ENV ?= dev
+PROJECT ?= example-project
+CHART ?= postgresql
+
+.PHONY: helm-template-postgres
+helm-template-postgres: ## Renderizar chart postgresql (ENV, PROJECT)
+	@test -f argocd/applications/$(PROJECT)/$(ENV)/postgres-values.yaml || \
+		(echo "$(YELLOW)Delta ausente: argocd/applications/$(PROJECT)/$(ENV)/postgres-values.yaml$(NC)" && exit 1)
+	helm template postgres charts/$(CHART) \
+		-f charts/$(CHART)/base/values.yaml \
+		-f charts/$(CHART)/overlays/$(ENV)/values.yaml \
+		-f argocd/applications/$(PROJECT)/$(ENV)/postgres-values.yaml
+
+.PHONY: new-chart
+new-chart: ## Copiar charts/_template para charts/NAME (NAME obrigatorio)
+	@test -n "$(NAME)" || (echo "$(YELLOW)Uso: make new-chart NAME=my-chart$(NC)" && exit 1)
+	@test ! -e charts/$(NAME) || (echo "$(YELLOW)charts/$(NAME) ja existe$(NC)" && exit 1)
+	cp -R charts/_template charts/$(NAME)
+	sed -i '' 's/CHART_NAME/$(NAME)/g' charts/$(NAME)/Chart.yaml
+	@echo "$(GREEN)Chart criado em charts/$(NAME)$(NC)"
 
 .PHONY: generate-deploy-key
 generate-deploy-key: ## Gerar SSH key para este repositorio

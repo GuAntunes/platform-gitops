@@ -1,11 +1,7 @@
 # Overlay staging — apenas deltas sobre o base.
 
 postgresql:
-  database: app_staging
   password: postgres_staging
-
-service:
-  nodePort: 30433
 
 resources:
   limits:

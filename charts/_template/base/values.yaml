@@ -1,0 +1,3 @@
+# Valores comuns a todos os ambientes (mesclados antes dos overlays).
+
+replicaCount: 1

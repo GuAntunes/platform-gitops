@@ -1,0 +1,4 @@
+# Defaults do chart — uso local: helm template . (sem overlays GitOps)
+# Em ArgoCD, prefira base/ + overlays/ + delta em argocd/applications/
+
+replicaCount: 1
